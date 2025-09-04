@@ -2,9 +2,8 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta, UTC
 from decimal import Decimal
 
-from sqlmodel import Session, select, and_, or_, desc, asc
+from sqlmodel import Session, select, and_, or_, desc, asc, func, text
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import func, text
 
 from database.models import (
     Order, Fill, Position, Signal, Candle1m, AccountSnapshot,

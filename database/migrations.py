@@ -1,8 +1,10 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Callable
 from datetime import datetime, UTC
 import json
 
 from sqlmodel import SQLModel, Field, Session, select, text
+from sqlalchemy import Index, MetaData, Table
+from sqlalchemy.schema import CreateIndex, DropIndex
 from database.connection import get_database_manager
 from utils.logging import get_logger, TradingLoggerAdapter
 
@@ -18,16 +20,20 @@ class MigrationRecord(SQLModel, table=True):
 
 
 class Migration:
-    def __init__(self, version: str, name: str, up_sql: str, down_sql: str = ""):
+    def __init__(self, version: str, name: str, up_func: Callable, down_func: Callable = None):
         self.version = version
         self.name = name
-        self.up_sql = up_sql
-        self.down_sql = down_sql
+        self.up_func = up_func
+        self.down_func = down_func
         self.checksum = self._calculate_checksum()
     
     def _calculate_checksum(self) -> str:
         import hashlib
-        content = f"{self.version}{self.name}{self.up_sql}{self.down_sql}"
+        import inspect
+        
+        up_source = inspect.getsource(self.up_func) if self.up_func else ""
+        down_source = inspect.getsource(self.down_func) if self.down_func else ""
+        content = f"{self.version}{self.name}{up_source}{down_source}"
         return hashlib.md5(content.encode()).hexdigest()
 
 
@@ -40,60 +46,104 @@ class MigrationManager:
     def _register_default_migrations(self):
         """Register default migrations for initial schema setup"""
         
-        # Migration 001: Create initial indexes
+        def migration_001_up(engine):
+            """Create additional performance indexes"""
+            metadata = MetaData()
+            
+            # Create additional indexes using SQLAlchemy DDL
+            orders_table = Table('orders', metadata, autoload_with=engine)
+            fills_table = Table('fills', metadata, autoload_with=engine)
+            signals_table = Table('signals', metadata, autoload_with=engine)
+            candles_table = Table('candles_1m', metadata, autoload_with=engine)
+            
+            indexes = [
+                Index('idx_orders_symbol_created_status', orders_table.c.symbol, orders_table.c.created_at, orders_table.c.status),
+                Index('idx_fills_symbol_executed_price', fills_table.c.symbol, fills_table.c.executed_at, fills_table.c.price),
+                Index('idx_signals_strategy_symbol_created', signals_table.c.strategy, signals_table.c.symbol, signals_table.c.created_at),
+                Index('idx_candles_symbol_time_closed', candles_table.c.symbol, candles_table.c.open_time, candles_table.c.is_closed),
+            ]
+            
+            for idx in indexes:
+                try:
+                    CreateIndex(idx, if_not_exists=True).execute(engine)
+                except Exception as e:
+                    # Index might already exist
+                    pass
+        
+        def migration_001_down(engine):
+            """Drop additional performance indexes"""
+            metadata = MetaData()
+            
+            orders_table = Table('orders', metadata, autoload_with=engine)
+            fills_table = Table('fills', metadata, autoload_with=engine)
+            signals_table = Table('signals', metadata, autoload_with=engine)
+            candles_table = Table('candles_1m', metadata, autoload_with=engine)
+            
+            indexes = [
+                Index('idx_orders_symbol_created_status', orders_table.c.symbol, orders_table.c.created_at, orders_table.c.status),
+                Index('idx_fills_symbol_executed_price', fills_table.c.symbol, fills_table.c.executed_at, fills_table.c.price),
+                Index('idx_signals_strategy_symbol_created', signals_table.c.strategy, signals_table.c.symbol, signals_table.c.created_at),
+                Index('idx_candles_symbol_time_closed', candles_table.c.symbol, candles_table.c.open_time, candles_table.c.is_closed),
+            ]
+            
+            for idx in indexes:
+                try:
+                    DropIndex(idx, if_exists=True).execute(engine)
+                except Exception as e:
+                    # Index might not exist
+                    pass
+        
+        # Register migration 001
         self.add_migration(
             version="001",
             name="create_additional_indexes",
-            up_sql="""
-                -- Additional performance indexes
-                CREATE INDEX IF NOT EXISTS idx_orders_symbol_created_status 
-                ON orders(symbol, created_at, status);
-                
-                CREATE INDEX IF NOT EXISTS idx_fills_symbol_executed_price 
-                ON fills(symbol, executed_at, price);
-                
-                CREATE INDEX IF NOT EXISTS idx_signals_strategy_symbol_created 
-                ON signals(strategy, symbol, created_at);
-                
-                CREATE INDEX IF NOT EXISTS idx_candles_symbol_time_closed 
-                ON candles_1m(symbol, open_time, is_closed);
-            """,
-            down_sql="""
-                DROP INDEX IF EXISTS idx_orders_symbol_created_status;
-                DROP INDEX IF EXISTS idx_fills_symbol_executed_price;
-                DROP INDEX IF EXISTS idx_signals_strategy_symbol_created;
-                DROP INDEX IF EXISTS idx_candles_symbol_time_closed;
-            """
+            up_func=migration_001_up,
+            down_func=migration_001_down
         )
         
-        # Migration 002: Add performance monitoring columns
+        def migration_002_up(engine):
+            """Add performance monitoring columns"""
+            # For SQLite, we need to use ALTER TABLE statements
+            with engine.connect() as conn:
+                try:
+                    conn.execute(text("ALTER TABLE orders ADD COLUMN execution_duration_ms INTEGER DEFAULT NULL"))
+                except Exception:
+                    pass  # Column might already exist
+                
+                try:
+                    conn.execute(text("ALTER TABLE orders ADD COLUMN slippage_bps INTEGER DEFAULT NULL"))
+                except Exception:
+                    pass  # Column might already exist
+                
+                try:
+                    conn.execute(text("ALTER TABLE signals ADD COLUMN market_impact_bps INTEGER DEFAULT NULL"))
+                except Exception:
+                    pass  # Column might already exist
+                
+                try:
+                    conn.execute(text("ALTER TABLE signals ADD COLUMN signal_delay_ms INTEGER DEFAULT NULL"))
+                except Exception:
+                    pass  # Column might already exist
+                
+                conn.commit()
+        
+        def migration_002_down(engine):
+            """Remove performance monitoring columns"""
+            # SQLite doesn't support DROP COLUMN, so we'll leave the columns
+            # In a real migration system, we'd recreate the table without these columns
+            pass
+        
+        # Register migration 002
         self.add_migration(
             version="002",
             name="add_performance_columns",
-            up_sql="""
-                -- Add performance tracking columns to orders
-                ALTER TABLE orders 
-                ADD COLUMN execution_duration_ms INTEGER DEFAULT NULL;
-                
-                ALTER TABLE orders 
-                ADD COLUMN slippage_bps INTEGER DEFAULT NULL;
-                
-                -- Add strategy performance columns to signals
-                ALTER TABLE signals 
-                ADD COLUMN market_impact_bps INTEGER DEFAULT NULL;
-                
-                ALTER TABLE signals 
-                ADD COLUMN signal_delay_ms INTEGER DEFAULT NULL;
-            """,
-            down_sql="""
-                -- Note: SQLite doesn't support DROP COLUMN, so we'd need to recreate tables
-                -- For simplicity, we'll leave the columns (they'll just be ignored)
-            """
+            up_func=migration_002_up,
+            down_func=migration_002_down
         )
     
-    def add_migration(self, version: str, name: str, up_sql: str, down_sql: str = ""):
+    def add_migration(self, version: str, name: str, up_func: Callable, down_func: Callable = None):
         """Add a new migration"""
-        migration = Migration(version, name, up_sql, down_sql)
+        migration = Migration(version, name, up_func, down_func)
         self.migrations.append(migration)
         self.migrations.sort(key=lambda m: m.version)
     
@@ -134,12 +184,10 @@ class MigrationManager:
             
             self.logger.info(f"Applying migration {migration.version}: {migration.name}")
             
-            # Execute migration SQL
-            if migration.up_sql.strip():
-                # Split SQL by semicolon and execute each statement
-                statements = [stmt.strip() for stmt in migration.up_sql.split(';') if stmt.strip()]
-                for stmt in statements:
-                    session.exec(text(stmt))
+            # Execute migration function with engine
+            if migration.up_func:
+                db_manager = get_database_manager()
+                migration.up_func(db_manager.engine)
             
             # Record migration as applied
             migration_record = MigrationRecord(
@@ -172,11 +220,10 @@ class MigrationManager:
             
             self.logger.info(f"Rolling back migration {version}: {migration.name}")
             
-            # Execute rollback SQL
-            if migration.down_sql.strip():
-                statements = [stmt.strip() for stmt in migration.down_sql.split(';') if stmt.strip()]
-                for stmt in statements:
-                    session.exec(text(stmt))
+            # Execute rollback function
+            if migration.down_func:
+                db_manager = get_database_manager()
+                migration.down_func(db_manager.engine)
             
             # Remove migration record
             statement = select(MigrationRecord).where(MigrationRecord.version == version)
