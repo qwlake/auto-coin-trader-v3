@@ -5,6 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Overview
 
 This is **auto-coin-trader-v3**, a Binance Futures automated trading system that receives price data via WebSocket and executes buy/sell operations automatically. The project is in early development with only a basic structure established.
+All files you've modified should be committed to git with a descriptive message at the end of each step. The branch name should be claude.
 
 ## Development Environment
 

@@ -1,0 +1,16 @@
+symbol: BTCUSDT
+enabled: true
+leverage: 10
+position_size_usd: 100
+max_position_size_usd: 500
+daily_max_loss_usd: 50
+profit_target_pct: 0.6
+stop_loss_pct: 0.3
+max_consecutive_losses: 3
+trading_hours_utc: null  # 24/7 trading
+strategy_params:
+  adx_threshold: 20
+  vwap_std_multiplier: 1.5
+  volatility_check_seconds: 5
+  volatility_halt_minutes: 10
+  min_volume_threshold: 1000000
