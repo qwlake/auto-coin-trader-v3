@@ -5,7 +5,7 @@ from typing import Dict, Optional, Callable, Any, List
 from datetime import datetime
 import websockets
 from websockets.exceptions import ConnectionClosed, WebSocketException
-from binance_common.websocket.websocket_api import BinanceWebSocketApiManager
+from binance_sdk_derivatives_trading_usds_futures.websocket_streams import DerivativesTradingUsdsFuturesWebSocketStreams
 
 from utils.logging import get_logger, TradingLoggerAdapter
 from config.settings import Settings

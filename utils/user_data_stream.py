@@ -4,7 +4,7 @@ import time
 from typing import Optional, Dict, Any
 from datetime import datetime
 
-from binance_common.rest.futures_api import BinanceFuturesRestApiManager
+from binance_sdk_derivatives_trading_usds_futures.rest_api import DerivativesTradingUsdsFuturesRestAPI
 from utils.logging import get_logger, TradingLoggerAdapter
 from config.api_keys import APIKeyManager
 
@@ -27,7 +27,7 @@ class UserDataStreamManager:
         try:
             keys = self.api_key_manager.get_binance_keys("testnet" if self.testnet else "mainnet")
             
-            self.rest_api = BinanceFuturesRestApiManager(
+            self.rest_api = DerivativesTradingUsdsFuturesRestAPI(
                 api_key=keys.api_key,
                 api_secret=keys.api_secret,
                 testnet=self.testnet
