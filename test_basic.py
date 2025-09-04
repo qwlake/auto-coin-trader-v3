@@ -288,7 +288,6 @@ async def test_imports():
         ("utils.data_models", "KlineData"),
         ("utils.precision", "PrecisionManager"),
         ("utils.data_validation", "DataValidator"),
-        ("utils.stream_handlers", "KlineStreamHandler"),
         ("utils.binance_websocket", "BinanceWebSocketClient"),
         ("utils.binance_rest", "BinanceRestClient")
     ]
