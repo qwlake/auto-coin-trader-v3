@@ -275,6 +275,61 @@ async def test_data_validation():
         return False
 
 
+async def test_database_basic():
+    """Test basic database functionality"""
+    print("=" * 50)
+    print("Testing Database Basic Functionality...")
+    
+    try:
+        from config.settings import Settings
+        from database.connection import initialize_database, get_database_manager
+        from database.operations import db_ops
+        from database.models import OrderSide, OrderType, OrderStatus, SignalType
+        from decimal import Decimal
+        
+        settings = Settings()
+        
+        # Initialize database
+        success = initialize_database(settings)
+        if not success:
+            print("❌ Database initialization failed")
+            return False
+        
+        # Test database health
+        db_manager = get_database_manager(settings)
+        health = db_manager.health_check()
+        
+        if not health:
+            print("❌ Database health check failed")
+            return False
+        
+        print("✅ Database initialized and healthy")
+        
+        # Test basic operations
+        with db_manager.get_session() as session:
+            # Test creating a simple signal
+            signal_data = {
+                "strategy": "test_strategy",
+                "symbol": "BTCUSDT", 
+                "signal_type": SignalType.BUY,
+                "price": Decimal("50000.00"),
+                "confidence": Decimal("0.85")
+            }
+            
+            signal = db_ops.signals.create_signal(session, signal_data)
+            print(f"✅ Created test signal: ID {signal.id}")
+            
+            # Test retrieving signals
+            signals = db_ops.signals.get_recent_signals(session, limit=1)
+            print(f"✅ Retrieved {len(signals)} signals")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Database basic test failed: {e}")
+        return False
+
+
 async def test_imports():
     """Test that all modules can be imported"""
     print("=" * 50)
@@ -289,7 +344,10 @@ async def test_imports():
         ("utils.precision", "PrecisionManager"),
         ("utils.data_validation", "DataValidator"),
         ("utils.binance_websocket", "BinanceWebSocketClient"),
-        ("utils.binance_rest", "BinanceRestClient")
+        ("utils.binance_rest", "BinanceRestClient"),
+        ("database.connection", "DatabaseManager"),
+        ("database.models", "Order"),
+        ("database.operations", "DatabaseOperations")
     ]
     
     failed_imports = []
@@ -326,6 +384,7 @@ async def main():
         ("Symbol Configuration", test_symbol_config),
         ("Precision Management", test_precision_management),
         ("Data Validation", test_data_validation),
+        ("Database Basic", test_database_basic),
     ]
     
     results = []
