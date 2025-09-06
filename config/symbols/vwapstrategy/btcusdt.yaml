@@ -1,0 +1,16 @@
+daily_max_loss_usd: !!python/object/apply:decimal.Decimal
+- '50'
+enabled: true
+leverage: 10
+max_consecutive_losses: 3
+max_position_size_usd: !!python/object/apply:decimal.Decimal
+- '500'
+position_size_usd: !!python/object/apply:decimal.Decimal
+- '100'
+profit_target_pct: !!python/object/apply:decimal.Decimal
+- '0.6'
+stop_loss_pct: !!python/object/apply:decimal.Decimal
+- '0.3'
+strategy_params: {}
+symbol: BTCUSDT
+trading_hours_utc: null

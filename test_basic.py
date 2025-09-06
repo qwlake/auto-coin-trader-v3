@@ -330,6 +330,62 @@ async def test_database_basic():
         return False
 
 
+async def test_strategy_basic():
+    """Test basic strategy functionality"""
+    print("=" * 50)
+    print("Testing Strategy Engine Basic Functionality...")
+    
+    try:
+        from strategies.base import BaseStrategy, StrategySignal, StrategyState
+        from strategies.manager import StrategyRegistry, strategy_manager
+        from strategies.vwap_strategy import VWAPStrategy
+        from database.models import SignalType
+        from utils.indicators import calculate_vwap, calculate_adx
+        from decimal import Decimal
+        
+        # Test strategy signal creation
+        signal = StrategySignal(
+            symbol="BTCUSDT",
+            signal_type=SignalType.BUY,
+            price=Decimal("50000.00"),
+            confidence=Decimal("0.85")
+        )
+        print("✅ Created strategy signal")
+        
+        # Test strategy registry
+        registry = StrategyRegistry()
+        registry.register(VWAPStrategy)
+        strategies = registry.list_strategies()
+        print(f"✅ Strategy registry: {len(strategies)} strategies")
+        
+        # Test VWAP strategy creation
+        config = {
+            'vwap_period': 20,
+            'vwap_std_multiplier': 2.0,
+            'adx_period': 14,
+            'adx_threshold': 20,
+            'target_profit_pct': 0.006,
+            'stop_loss_pct': 0.003,
+            'volatility_threshold': 0.02,
+            'volatility_halt_minutes': 10,
+            'min_confidence': 0.6
+        }
+        
+        strategy = VWAPStrategy("BTCUSDT", config)
+        success = strategy.start()
+        print(f"✅ VWAP strategy started: {success}")
+        
+        # Test strategy manager
+        available = strategy_manager.get_available_strategies()
+        print(f"✅ Strategy manager: {len(available)} available strategies")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Strategy engine basic test failed: {e}")
+        return False
+
+
 async def test_imports():
     """Test that all modules can be imported"""
     print("=" * 50)
@@ -347,7 +403,11 @@ async def test_imports():
         ("utils.binance_rest", "BinanceRestClient"),
         ("database.connection", "DatabaseManager"),
         ("database.models", "Order"),
-        ("database.operations", "DatabaseOperations")
+        ("database.operations", "DatabaseOperations"),
+        ("strategies.base", "BaseStrategy"),
+        ("strategies.vwap_strategy", "VWAPStrategy"),
+        ("strategies.manager", "StrategyManager"),
+        ("utils.indicators", "calculate_vwap")
     ]
     
     failed_imports = []
@@ -385,6 +445,7 @@ async def main():
         ("Precision Management", test_precision_management),
         ("Data Validation", test_data_validation),
         ("Database Basic", test_database_basic),
+        ("Strategy Engine Basic", test_strategy_basic),
     ]
     
     results = []

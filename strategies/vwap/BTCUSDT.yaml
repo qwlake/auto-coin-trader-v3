@@ -1,0 +1,44 @@
+# VWAP Strategy Configuration for BTCUSDT
+symbol: "BTCUSDT"
+enabled: true
+leverage: 10
+position_size_usd: 100
+
+# Strategy-specific parameters
+strategy_params:
+  # VWAP Calculation
+  vwap_period: 50  # Number of klines for VWAP calculation
+  vwap_std_multiplier: 2.0  # Standard deviation multiplier for bands
+  
+  # ADX Filter
+  adx_period: 14  # ADX calculation period
+  adx_threshold: 20  # ADX below this value indicates sideways market
+  
+  # Profit/Loss Targets
+  target_profit_pct: 0.006  # 0.6% profit target
+  stop_loss_pct: 0.003     # 0.3% stop loss
+  
+  # Risk Management
+  volatility_threshold: 0.02      # 2% price change threshold
+  volatility_halt_minutes: 10     # Minutes to halt after volatility spike
+  min_confidence: 0.6             # Minimum signal confidence
+  
+  # Signal Timing
+  min_signal_interval_seconds: 60  # Minimum time between signals
+  
+  # Additional Filters
+  rsi_oversold_threshold: 25      # Avoid buying when RSI below this
+  rsi_overbought_threshold: 75    # Avoid selling when RSI above this
+  min_price_deviation_pct: 0.001  # Minimum 0.1% deviation from band
+
+# Risk Limits
+risk_limits:
+  max_daily_loss_usd: 500        # Maximum daily loss
+  max_position_size_usd: 1000    # Maximum position size
+  max_concurrent_trades: 1       # Maximum concurrent positions
+  
+# Logging
+logging:
+  log_signals: true
+  log_indicators: true
+  log_performance: true
