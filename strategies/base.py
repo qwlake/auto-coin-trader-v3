@@ -59,8 +59,15 @@ class StrategySignal:
 
 class BaseStrategy(ABC):
     """Base class for all trading strategies"""
-    
+
+    @classmethod
+    @abstractmethod
+    def get_strategy_name(cls) -> str:
+        """Return strategy name"""
+        pass
+
     def __init__(self, symbol: str, config: Dict[str, Any]):
+        self.strategy_name = self.get_strategy_name()
         self.symbol = symbol
         self.config = config
         self.state = StrategyState.INACTIVE
@@ -123,6 +130,7 @@ class BaseStrategy(ABC):
             Minimum number of klines needed
         """
         pass
+
     
     def start(self) -> bool:
         """Start the strategy"""

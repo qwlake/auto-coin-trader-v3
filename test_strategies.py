@@ -70,7 +70,7 @@ def test_strategy_registry():
         print(f"✅ Available strategies: {strategies}")
         
         # Test getting strategy class
-        vwap_class = registry.get_strategy("VWAPStrategy")
+        vwap_class = registry.get_strategy("vwap")
         if vwap_class:
             print(f"✅ Retrieved VWAPStrategy class: {vwap_class.__name__}")
         
@@ -201,7 +201,7 @@ def test_strategy_manager():
         
         # Test creating strategy (will fail due to symbol config, but should not crash)
         try:
-            instance_key = strategy_manager.create_strategy("VWAPStrategy", "BTCUSDT")
+            instance_key = strategy_manager.create_strategy("vwap", "BTCUSDT")
             if instance_key:
                 print(f"✅ Created strategy instance: {instance_key}")
                 

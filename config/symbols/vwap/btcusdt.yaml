@@ -9,8 +9,14 @@ stop_loss_pct: 0.3
 max_consecutive_losses: 3
 trading_hours_utc: null  # 24/7 trading
 strategy_params:
+  vwap_period: 50
+  adx_period: 14
   adx_threshold: 20
   vwap_std_multiplier: 1.5
+  volatility_threshold: 0.02
   volatility_check_seconds: 5
   volatility_halt_minutes: 10
+  min_confidence: 0.6
   min_volume_threshold: 1000000
+  target_profit_pct: 0.006
+  stop_loss_pct: 0.003

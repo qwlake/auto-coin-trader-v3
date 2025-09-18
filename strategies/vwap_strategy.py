@@ -25,6 +25,10 @@ class VWAPStrategy(BaseStrategy):
     5. Safety mechanism: halt trading for 10 minutes after volatility spike
     """
     
+    @classmethod
+    def get_strategy_name(cls) -> str:
+        return "vwap"
+
     def __init__(self, symbol: str, config: Dict[str, Any]):
         super().__init__(symbol, config)
         

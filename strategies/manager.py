@@ -24,7 +24,7 @@ class StrategyRegistry:
         Args:
             strategy_class: Strategy class to register
         """
-        strategy_name = strategy_class.__name__
+        strategy_name = strategy_class.get_strategy_name()
         if strategy_name in self.strategies:
             self.logger.warning(f"Strategy {strategy_name} already registered, overwriting")
         
@@ -195,7 +195,7 @@ class StrategyManager:
                 return None
             
             # Load symbol configuration
-            symbol_config = self.symbol_manager.load_symbol_config(symbol, strategy_name.lower())
+            symbol_config = self.symbol_manager.load_symbol_config(symbol, strategy_class.get_strategy_name())
             if not symbol_config or not symbol_config.enabled:
                 self.logger.error(f"Symbol {symbol} not enabled for strategy {strategy_name}")
                 return None
