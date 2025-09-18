@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  trader:
+    build: .
+    container_name: auto-coin-trader
+    restart: unless-stopped
+    command: ["main"]
+    environment:
+      - MODE=mainnet
+      - DB_URL=sqlite:///./database/trader.db
+      - LOG_LEVEL=INFO
+      - POSITION_MODE=HEDGE
+    env_file:
+      - .env
+    volumes:
+      - ./database:/app/database
+      - ./logs:/app/logs
+      - ./status:/app/status
+      - ./config:/app/config
+    healthcheck:
+      test: ["CMD", "python", "-c", "import json; print('healthy' if json.load(open('/app/status/heartbeat.json', 'r')).get('status') == 'running' else exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    depends_on:
+      - dashboard
+    networks:
+      - trader-network
+
+  dashboard:
+    build: .
+    container_name: auto-coin-trader-dashboard
+    restart: unless-stopped
+    command: ["dashboard"]
+    ports:
+      - "8501:8501"
+    environment:
+      - MODE=mainnet
+      - DB_URL=sqlite:///./database/trader.db
+      - LOG_LEVEL=INFO
+    env_file:
+      - .env
+    volumes:
+      - ./database:/app/database
+      - ./logs:/app/logs
+      - ./status:/app/status
+      - ./config:/app/config
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - trader-network
+
+networks:
+  trader-network:
+    driver: bridge
+
+volumes:
+  database:
+  logs:
+  status:

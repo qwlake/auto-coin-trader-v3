@@ -16,10 +16,11 @@ All files you've modified should be committed to git with a descriptive message 
 - **Monitoring**: Streamlit dashboard for real-time monitoring
 - **Alerts**: Slack integration for critical events
 - **Security**: 1Password for API key management
-- **Deployment**: AWS cloud with RDS auto backup
+- **Deployment**: AWS cloud with RDS auto backup and Docker
 
 ## Common Commands
 
+### Local Development (uv)
 ```bash
 # Activate virtual environment and run
 uv run python main.py
@@ -37,11 +38,25 @@ uv run streamlit run dashboard/main.py
 uv add sqlmodel fastapi streamlit slack-sdk binance-sdk-derivatives-trading-usds-futures
 ```
 
+### Docker Deployment
+```bash
+# Build Docker image
+docker build -t auto-coin-trader-v3 .
+
+# Run with docker compose (development)
+docker compose up -d
+
+# Run with docker compose (production)
+docker compose -f docker-compose.prod.yml up -d
+
+# Docker image should include both main.py and dashboard services
+```
+
 ## Project Architecture
 
 The system is designed with a modular architecture (not yet implemented):
 
-### Planned Directory Structure
+### Directory Structure
 - `main.py`: Program entry point, initialization, event loop, module connections
 - `strategies/`: Strategy modules - each strategy is an independent file generating signals only
   - `strategies/{strategy_name}/{symbol}.yaml`: Symbol-specific strategy configuration files
@@ -53,6 +68,9 @@ The system is designed with a modular architecture (not yet implemented):
 - `status/`: Program status and health check files (heartbeat, etc.)
 - `tests/`: Unit and integration test code
 - `logs/`: Log file directory
+- `Dockerfile`: Docker image build configuration (uv-based)
+- `docker-compose.prod.yml`: Production environment Docker Compose
+- `entrypoint.sh`: Docker container startup script
 
 ### Core Architecture Principles
 - **Event-driven**: Uses asyncio Queue-based signal passing with channels like `signal.*`, `order.request`, `order.update`
@@ -164,4 +182,7 @@ The system is planned for expansion to support multiple trading pairs simultaneo
 - **Strategy modularity**: Each symbol can run different strategies independently
 - All trading operations should go through proper risk management and validation layers
 - Maintain comprehensive logging for all trading activities
-- **AWS deployment ready**: Design with cloud deployment and RDS backup in mind
+- **Deployment strategy**:
+  - Local development: Use `uv run` commands directly in bash
+  - Server deployment: Docker containers only for production environment
+  - Docker deployment must include both main.py (trading) and dashboard services

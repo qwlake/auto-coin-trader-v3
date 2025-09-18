@@ -15,6 +15,14 @@
 - tests/: 단위/통합 테스트 코드.
 - logs/: 로그 파일 디렉토리 (gitignore).
 - docs/: 프로젝트 문서 디렉토리. 전략 설계 및 거래 규칙 정리.
+- Dockerfile: 도커 이미지 빌드 설정 (uv 기반)
+- docker-compose.prod.yml: 운영 환경용 도커 컴포즈
+- entrypoint.sh: 도커 컨테이너 시작 스크립트
+
+## Docker
+- 로컬 개발 환경은 bash 에서 `uv run` 사용
+- 서버 운영 환경에서만 Docker 사용
+- Docker 운용시 main.py 와 dashboard 둘 다 구성해야함
 
 ## 기술 스택
 - **Python**: 3.12+
